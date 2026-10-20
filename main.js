@@ -226,7 +226,7 @@ document.getElementById('btnEnviarImagen').addEventListener('click', () => {
     cerrarModal('modalCrearImagen');
 });
 
-// --- MÓDULO 3: VIDEO (COMPATIBILIDAD MEJORADA PARA CHROME) ---
+// --- MÓDULO 3: VIDEO (MANEJO DE ERRORES MEJORADO PARA CHROME) ---
 let mediaRecorder;
 let videoChunks = [];
 let videoBase64Url = null;
@@ -241,9 +241,9 @@ btnGrabar.addEventListener('click', async () => {
     try {
         videoChunks = [];
         
-        // Petición limpia y abierta para Chrome móvil
+        // Petición asegurando compatibilidad con dispositivos móviles
         streamCamara = await navigator.mediaDevices.getUserMedia({ 
-            video: true, 
+            video: { facingMode: "user" }, // Forzar cámara frontal para grabar la seña
             audio: true 
         });
 
@@ -251,10 +251,9 @@ btnGrabar.addEventListener('click', async () => {
         videoPreview.style.display = 'block';
         videoPreview.controls = false;
         
-        // Detectar el formato compatible automáticamente que prefiera Chrome
         let opcionesGrabacion = { mimeType: 'video/webm' };
         if (MediaRecorder.isTypeSupported('video/mp4')) {
-            opcionesGrabacion = { mimeType: 'video/mp4' }; // Muy útil para Chrome en Android/iOS
+            opcionesGrabacion = { mimeType: 'video/mp4' };
         } else if (MediaRecorder.isTypeSupported('video/webm;codecs=vp8,opus')) {
             opcionesGrabacion = { mimeType: 'video/webm;codecs=vp8,opus' };
         }
@@ -285,8 +284,9 @@ btnGrabar.addEventListener('click', async () => {
         btnEnviarVideo.disabled = true;
 
     } catch (err) {
-        alert("Error de Chrome al acceder a la cámara. Revisa que el sitio tenga permisos activos en el candado 🔒 de la barra de direcciones.");
+        // Mostramos el error técnico exacto en la alerta para salir de dudas
         console.error(err);
+        alert("Error de cámara: " + err.name + " - " + err.message);
     }
 });
 
