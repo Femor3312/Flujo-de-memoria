@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Flujo de Señas</title>
+    <!-- Importar Montserrat -->
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="estilos.css?v=8.0">
+</head>
+<body>
+    <canvas id="flujoCanvas"></canvas>
+
+    <!-- CÍRCULO CENTRAL -->
+    <div id="centroFlujo">
+        <h2>FLUJO DE<br>SEÑAS</h2>
+        <p>Un espacio colaborativo para compartir y aprender Lenguaje de Señas. Comparte texto, imágenes o videos breves.</p>
+        <div class="caja-botones">
+            <button id="btnAbrirTexto" class="btn-circulo txt" title="Compartir Texto">T</button>
+            <button id="btnAbrirImagen" class="btn-circulo img" title="Subir Imagen">I</button>
+            <button id="btnAbrirVideo" class="btn-circulo vid" title="Grabar Video">V</button>
+        </div>
+    </div>
+
+    <!-- MODAL 1: TEXTO -->
+    <div id="modalCrearTexto" class="modal">
+        <button class="cerrar-modal" id="cerrarCrearTexto">X</button>
+        <h3>Comparte una explicación</h3>
+        <input type="text" id="inputTituloTxt" placeholder="Palabra o seña a explicar">
+        <input type="text" id="inputAutorTxt" placeholder="Tu nombre">
+        <textarea id="inputContenidoTxt" rows="4" placeholder="Describe los movimientos de las manos, gestos, etc."></textarea>
+        <button class="btn-enviar" id="btnEnviarTexto">Enviar al flujo</button>
+    </div>
+
+    <!-- MODAL 2: IMAGEN -->
+    <div id="modalCrearImagen" class="modal">
+        <button class="cerrar-modal" id="cerrarCrearImagen">X</button>
+        <h3>Sube una ilustración o foto</h3>
+        <input type="text" id="inputTituloImg" placeholder="Palabra o seña">
+        <input type="text" id="inputAutorImg" placeholder="Tu nombre">
+        
+        <input type="file" id="inputFileImg" accept="image/*" class="input-file">
+        <img id="previewImg" src="" alt="Previsualización" style="display: none;">
+        
+        <div class="controles-dibujo">
+            <button id="btnLimpiarImagen" class="btn-secundario">Quitar imagen</button>
+            <button class="btn-enviar" id="btnEnviarImagen">Enviar al flujo</button>
+        </div>
+    </div>
+
+    <!-- MODAL 3: VIDEO -->
+    <div id="modalCrearVideo" class="modal">
+        <button class="cerrar-modal" id="cerrarCrearVideo">X</button>
+        <h3>Graba tu seña en video</h3>
+        <input type="text" id="inputTituloVid" placeholder="Palabra o seña">
+        <input type="text" id="inputAutorVid" placeholder="Tu nombre">
+        <div class="controles-video">
+            <button id="btnGrabar" class="btn-grabar">⏺ Grabar Video</button>
+            <button id="btnDetener" class="btn-detener" disabled>⏹ Detener</button>
+        </div>
+        <video id="videoPreview" autoplay muted style="display: none; width: 100%; max-height: 200px; background: #000; margin-bottom: 15px; border-radius: 4px;"></video>
+        <button class="btn-enviar" id="btnEnviarVideo" disabled>Enviar al flujo</button>
+    </div>
+
+    <!-- MODAL DE LECTURA -->
+    <div id="modalAporte" class="modal">
+        <button class="cerrar-modal" id="cerrarModalAporte">X</button>
+        <div id="contenidoModal">
+            <div id="modalIcono">T</div> 
+            <h3 id="modalTitulo">Palabra o Seña</h3>
+            
+            <p id="modalTexto"></p>
+            <img id="modalImagen" src="" alt="Imagen de seña">
+            <video id="modalVideoPlayer" controls style="display: none; width: 100%; max-height: 300px; background: #000; margin-bottom: 20px; border-radius: 4px;"></video>
+
+            <span id="modalAutor">Autor</span>
+        </div>
+    </div>
+
+    <script src="https://www.gstatic.com/firebasejs/10.5.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.5.0/firebase-firestore-compat.js"></script>
+    <script src="main.js?v=8.0"></script>
+</body>
+</html>

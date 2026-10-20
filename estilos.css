@@ -1,0 +1,88 @@
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body { 
+    background-color: #283347; 
+    overflow: hidden; 
+    font-family: 'Montserrat', sans-serif; 
+}
+#flujoCanvas { 
+    display: block; 
+    width: 100vw; 
+    height: 100vh; 
+    cursor: default; /* El canvas por defecto tendrá cursor normal, JS lo cambiará dinámicamente */
+}
+
+/* CÍRCULO CENTRAL REDUCIDO Y ESTILIZADO */
+#centroFlujo {
+    position: absolute; top: 50%; left: 50%;
+    transform: translate(-50%, -50%); width: 320px; height: 320px;
+    background: rgba(240, 244, 248, 0.95); border-radius: 50%;
+    border: 2px solid rgba(255, 255, 255, 0.5); display: flex;
+    flex-direction: column; justify-content: center; align-items: center;
+    text-align: center; padding: 25px; box-shadow: 0 0 40px rgba(0,0,0,0.5);
+    pointer-events: auto;
+}
+#centroFlujo h2 { font-size: 22px; color: #1e293b; margin-bottom: 8px; font-weight: 700; letter-spacing: 1px;}
+#centroFlujo p { font-size: 11px; color: #475569; margin-bottom: 15px; line-height: 1.4; font-weight: 400;}
+
+.caja-botones { display: flex; gap: 10px; }
+.btn-circulo {
+    width: 45px; height: 45px; border-radius: 50%; border: none;
+    color: white; font-size: 18px; font-weight: bold; cursor: pointer; /* Manito en botones */
+    transition: transform 0.2s, filter 0.2s;
+    box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+}
+.btn-circulo:hover { transform: scale(1.1); filter: brightness(1.1); }
+
+/* Colores solicitados para los botones */
+.btn-circulo.txt { background-color: #F0B429; } 
+.btn-circulo.img { background-color: #005883; } 
+.btn-circulo.vid { background-color: #F4402A; } 
+
+.modal {
+    position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
+    background-color: #ffffff; width: 80%; max-width: 450px; padding: 30px;
+    border-radius: 8px; box-shadow: 0 0 30px rgba(0,0,0,0.8); z-index: 100;
+    display: none; text-align: center; font-family: 'Montserrat', sans-serif;
+}
+.modal.activo { display: block; }
+.cerrar-modal {
+    position: absolute; top: 15px; right: 15px; background: #111; color: white;
+    border: none; border-radius: 50%; width: 25px; height: 25px; cursor: pointer; font-weight: bold;
+}
+
+input[type="text"], textarea {
+    width: 100%; padding: 10px; margin-bottom: 15px; border: 1px solid #ccc;
+    border-radius: 4px; font-family: 'Montserrat', sans-serif;
+}
+.input-file {
+    width: 100%; padding: 10px; background: #fff; margin-bottom: 15px; border-radius: 4px;
+    border: 1px solid #ccc; cursor: pointer;
+}
+#previewImg {
+    width: 100%; max-height: 200px; object-fit: contain; margin-bottom: 15px;
+    border-radius: 4px; background: #eee;
+}
+
+.btn-enviar {
+    padding: 10px 20px; background: #005883; color: white; border: none;
+    border-radius: 4px; cursor: pointer; font-weight: 700; width: 100%;
+}
+.btn-secundario {
+    padding: 10px; background: #64748b; color: white; border: none;
+    border-radius: 4px; cursor: pointer; font-weight: 700; width: 100%;
+}
+
+.controles-dibujo, .controles-video { display: flex; gap: 10px; margin-bottom: 15px; }
+
+.btn-grabar { background: #d9534f; color: white; padding: 10px; border: none; border-radius: 4px; width: 100%; cursor: pointer; font-weight: 700;}
+.btn-detener { background: #005883; color: white; padding: 10px; border: none; border-radius: 4px; width: 100%; cursor: pointer; font-weight: 700;}
+.btn-detener:disabled, .btn-enviar:disabled { background: #ccc; cursor: not-allowed; }
+
+#modalIcono {
+    width: 40px; height: 40px; background: #005883; color: white; border-radius: 50%;
+    line-height: 40px; margin: 0 auto 15px auto; font-size: 20px; font-weight: bold;
+}
+#modalTitulo { margin-bottom: 10px; font-size: 20px; color: #222; text-transform: uppercase; font-weight: 700;}
+#modalTexto { font-size: 15px; color: #444; margin-bottom: 20px; line-height: 1.6; display: none; }
+#modalImagen { max-width: 100%; max-height: 300px; margin-bottom: 20px; border-radius: 4px; display: none; object-fit: contain;}
+#modalAutor { display: block; font-size: 12px; color: #777; font-weight: 500; }
