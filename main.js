@@ -240,9 +240,9 @@ const videoPreview = document.getElementById('videoPreview');
 btnGrabar.addEventListener('click', async () => {
     try {
         videoChunks = [];
-        // Resolución optimizada para mantener el peso bajo control
+        // Configuración genérica abierta para evitar rechazos en celulares
         streamCamara = await navigator.mediaDevices.getUserMedia({ 
-            video: { width: { ideal: 480 }, height: { ideal: 360 }, frameRate: { ideal: 15 } }, 
+            video: true, 
             audio: true 
         });
 
@@ -250,11 +250,7 @@ btnGrabar.addEventListener('click', async () => {
         videoPreview.style.display = 'block';
         videoPreview.controls = false;
         
-        // Forzamos un bitrate bajo (150kbps) para garantizar compresión agresiva en el navegador
-        mediaRecorder = new MediaRecorder(streamCamara, { 
-            mimeType: 'video/webm;codecs=vp8,opus',
-            videoBitsPerSecond: 150000 
-        });
+        mediaRecorder = new MediaRecorder(streamCamara, { mimeType: 'video/webm' });
         
         mediaRecorder.ondataavailable = (e) => {
             if (e.data.size > 0) videoChunks.push(e.data);
@@ -266,7 +262,7 @@ btnGrabar.addEventListener('click', async () => {
             const reader = new FileReader();
             reader.readAsDataURL(videoBlob);
             reader.onloadend = () => {
-                videoBase64Url = reader.result; // Video comprimido en Base64 listo para Firestore
+                videoBase64Url = reader.result;
                 videoPreview.srcObject = null;
                 videoPreview.src = videoBase64Url;
                 videoPreview.controls = true;
@@ -280,11 +276,10 @@ btnGrabar.addEventListener('click', async () => {
         btnEnviarVideo.disabled = true;
 
     } catch (err) {
-        alert("Debes permitir el acceso a la cámara y al micrófono.");
+        alert("No se pudo acceder a la cámara. Verifica que ninguna otra app la esté usando y que los permisos del celular estén activos.");
         console.error(err);
     }
 });
-
 btnDetener.addEventListener('click', () => {
     if (mediaRecorder) mediaRecorder.stop();
     if (streamCamara) {
