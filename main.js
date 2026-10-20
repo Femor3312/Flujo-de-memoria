@@ -226,7 +226,7 @@ document.getElementById('btnEnviarImagen').addEventListener('click', () => {
     cerrarModal('modalCrearImagen');
 });
 
-// --- MÓDULO 3: VIDEO CON COMPRESOR NATIVO INTEGRADO ---
+// --- MÓDULO 3: VIDEO (VERSIÓN ESTABLE ANTERIOR) ---
 let mediaRecorder;
 let videoChunks = [];
 let videoBase64Url = null;
@@ -240,7 +240,6 @@ const videoPreview = document.getElementById('videoPreview');
 btnGrabar.addEventListener('click', async () => {
     try {
         videoChunks = [];
-        // Resolución optimizada para mantener el peso bajo control
         streamCamara = await navigator.mediaDevices.getUserMedia({ 
             video: { width: { ideal: 480 }, height: { ideal: 360 }, frameRate: { ideal: 15 } }, 
             audio: true 
@@ -250,9 +249,8 @@ btnGrabar.addEventListener('click', async () => {
         videoPreview.style.display = 'block';
         videoPreview.controls = false;
         
-        // Forzamos un bitrate bajo (150kbps) para garantizar compresión agresiva en el navegador
         mediaRecorder = new MediaRecorder(streamCamara, { 
-            mimeType: 'video/webm;codecs=vp8,opus',
+            mimeType: 'video/webm',
             videoBitsPerSecond: 150000 
         });
         
@@ -266,7 +264,7 @@ btnGrabar.addEventListener('click', async () => {
             const reader = new FileReader();
             reader.readAsDataURL(videoBlob);
             reader.onloadend = () => {
-                videoBase64Url = reader.result; // Video comprimido en Base64 listo para Firestore
+                videoBase64Url = reader.result;
                 videoPreview.srcObject = null;
                 videoPreview.src = videoBase64Url;
                 videoPreview.controls = true;
