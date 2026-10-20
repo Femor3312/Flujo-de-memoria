@@ -226,7 +226,7 @@ document.getElementById('btnEnviarImagen').addEventListener('click', () => {
     cerrarModal('modalCrearImagen');
 });
 
-// --- MÓDULO 3: VIDEO CON COMPRESOR NATIVO INTEGRADO ---
+// --- MÓDULO 3: VIDEO (COMPATIBILIDAD MEJORADA PARA CHROME) ---
 let mediaRecorder;
 let videoChunks = [];
 let videoBase64Url = null;
@@ -240,7 +240,8 @@ const videoPreview = document.getElementById('videoPreview');
 btnGrabar.addEventListener('click', async () => {
     try {
         videoChunks = [];
-        // Configuración genérica abierta para evitar rechazos en celulares
+        
+        // Petición limpia y abierta para Chrome móvil
         streamCamara = await navigator.mediaDevices.getUserMedia({ 
             video: true, 
             audio: true 
@@ -250,14 +251,22 @@ btnGrabar.addEventListener('click', async () => {
         videoPreview.style.display = 'block';
         videoPreview.controls = false;
         
-        mediaRecorder = new MediaRecorder(streamCamara, { mimeType: 'video/webm' });
+        // Detectar el formato compatible automáticamente que prefiera Chrome
+        let opcionesGrabacion = { mimeType: 'video/webm' };
+        if (MediaRecorder.isTypeSupported('video/mp4')) {
+            opcionesGrabacion = { mimeType: 'video/mp4' }; // Muy útil para Chrome en Android/iOS
+        } else if (MediaRecorder.isTypeSupported('video/webm;codecs=vp8,opus')) {
+            opcionesGrabacion = { mimeType: 'video/webm;codecs=vp8,opus' };
+        }
+
+        mediaRecorder = new MediaRecorder(streamCamara, opcionesGrabacion);
         
         mediaRecorder.ondataavailable = (e) => {
             if (e.data.size > 0) videoChunks.push(e.data);
         };
 
         mediaRecorder.onstop = () => {
-            const videoBlob = new Blob(videoChunks, { type: 'video/webm' });
+            const videoBlob = new Blob(videoChunks, { type: mediaRecorder.mimeType || 'video/webm' });
             
             const reader = new FileReader();
             reader.readAsDataURL(videoBlob);
@@ -276,12 +285,15 @@ btnGrabar.addEventListener('click', async () => {
         btnEnviarVideo.disabled = true;
 
     } catch (err) {
-        alert("No se pudo acceder a la cámara. Verifica que ninguna otra app la esté usando y que los permisos del celular estén activos.");
+        alert("Error de Chrome al acceder a la cámara. Revisa que el sitio tenga permisos activos en el candado 🔒 de la barra de direcciones.");
         console.error(err);
     }
 });
+
 btnDetener.addEventListener('click', () => {
-    if (mediaRecorder) mediaRecorder.stop();
+    if (mediaRecorder && mediaRecorder.state !== "inactive") {
+        mediaRecorder.stop();
+    }
     if (streamCamara) {
         streamCamara.getTracks().forEach(track => track.stop());
     }
@@ -304,7 +316,6 @@ document.getElementById('btnEnviarVideo').addEventListener('click', () => {
     btnEnviarVideo.disabled = true;
     cerrarModal('modalCrearVideo');
 });
-
 // --- LÓGICA DE LECTURA ---
 canvas.addEventListener('click', (e) => {
     if (document.querySelector('.modal.activo')) return;
