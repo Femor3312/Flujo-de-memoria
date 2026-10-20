@@ -226,7 +226,7 @@ document.getElementById('btnEnviarImagen').addEventListener('click', () => {
     cerrarModal('modalCrearImagen');
 });
 
-// --- MÓDULO 3: VIDEO (MANEJO DE ERRORES MEJORADO PARA CHROME) ---
+// --- MÓDULO 3: VIDEO CON COMPRESOR NATIVO INTEGRADO ---
 let mediaRecorder;
 let videoChunks = [];
 let videoBase64Url = null;
@@ -240,10 +240,9 @@ const videoPreview = document.getElementById('videoPreview');
 btnGrabar.addEventListener('click', async () => {
     try {
         videoChunks = [];
-        
-        // Petición asegurando compatibilidad con dispositivos móviles
+        // Resolución optimizada para mantener el peso bajo control
         streamCamara = await navigator.mediaDevices.getUserMedia({ 
-            video: { facingMode: "user" }, // Forzar cámara frontal para grabar la seña
+            video: { width: { ideal: 480 }, height: { ideal: 360 }, frameRate: { ideal: 15 } }, 
             audio: true 
         });
 
@@ -251,26 +250,23 @@ btnGrabar.addEventListener('click', async () => {
         videoPreview.style.display = 'block';
         videoPreview.controls = false;
         
-        let opcionesGrabacion = { mimeType: 'video/webm' };
-        if (MediaRecorder.isTypeSupported('video/mp4')) {
-            opcionesGrabacion = { mimeType: 'video/mp4' };
-        } else if (MediaRecorder.isTypeSupported('video/webm;codecs=vp8,opus')) {
-            opcionesGrabacion = { mimeType: 'video/webm;codecs=vp8,opus' };
-        }
-
-        mediaRecorder = new MediaRecorder(streamCamara, opcionesGrabacion);
+        // Forzamos un bitrate bajo (150kbps) para garantizar compresión agresiva en el navegador
+        mediaRecorder = new MediaRecorder(streamCamara, { 
+            mimeType: 'video/webm;codecs=vp8,opus',
+            videoBitsPerSecond: 150000 
+        });
         
         mediaRecorder.ondataavailable = (e) => {
             if (e.data.size > 0) videoChunks.push(e.data);
         };
 
         mediaRecorder.onstop = () => {
-            const videoBlob = new Blob(videoChunks, { type: mediaRecorder.mimeType || 'video/webm' });
+            const videoBlob = new Blob(videoChunks, { type: 'video/webm' });
             
             const reader = new FileReader();
             reader.readAsDataURL(videoBlob);
             reader.onloadend = () => {
-                videoBase64Url = reader.result;
+                videoBase64Url = reader.result; // Video comprimido en Base64 listo para Firestore
                 videoPreview.srcObject = null;
                 videoPreview.src = videoBase64Url;
                 videoPreview.controls = true;
@@ -284,16 +280,13 @@ btnGrabar.addEventListener('click', async () => {
         btnEnviarVideo.disabled = true;
 
     } catch (err) {
-        // Mostramos el error técnico exacto en la alerta para salir de dudas
+        alert("Debes permitir el acceso a la cámara y al micrófono.");
         console.error(err);
-        alert("Error de cámara: " + err.name + " - " + err.message);
     }
 });
 
 btnDetener.addEventListener('click', () => {
-    if (mediaRecorder && mediaRecorder.state !== "inactive") {
-        mediaRecorder.stop();
-    }
+    if (mediaRecorder) mediaRecorder.stop();
     if (streamCamara) {
         streamCamara.getTracks().forEach(track => track.stop());
     }
@@ -316,6 +309,7 @@ document.getElementById('btnEnviarVideo').addEventListener('click', () => {
     btnEnviarVideo.disabled = true;
     cerrarModal('modalCrearVideo');
 });
+
 // --- LÓGICA DE LECTURA ---
 canvas.addEventListener('click', (e) => {
     if (document.querySelector('.modal.activo')) return;
