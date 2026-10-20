@@ -226,10 +226,10 @@ document.getElementById('btnEnviarImagen').addEventListener('click', () => {
     cerrarModal('modalCrearImagen');
 });
 
-// --- MÓDULO 3: VIDEO (OPTIMIZADO, GRATUITO Y SIN PANTALLA NEGRA) ---
+// --- MÓDULO 3: VIDEO CON COMPRESOR NATIVO INTEGRADO ---
 let mediaRecorder;
 let videoChunks = [];
-let videoBlobFinal = null;
+let videoBase64Url = null;
 let streamCamara = null;
 
 const btnGrabar = document.getElementById('btnGrabar');
@@ -240,9 +240,7 @@ const videoPreview = document.getElementById('videoPreview');
 btnGrabar.addEventListener('click', async () => {
     try {
         videoChunks = [];
-        videoBlobFinal = null;
-
-        // Petición optimizada y ligera para mantener el peso bajo control sin bloquear el navegador
+        // Resolución optimizada para mantener el peso bajo control
         streamCamara = await navigator.mediaDevices.getUserMedia({ 
             video: { width: { ideal: 480 }, height: { ideal: 360 }, frameRate: { ideal: 15 } }, 
             audio: true 
@@ -251,38 +249,32 @@ btnGrabar.addEventListener('click', async () => {
         videoPreview.srcObject = streamCamara;
         videoPreview.style.display = 'block';
         videoPreview.controls = false;
-        videoPreview.muted = true; // Evitar eco en vivo
         
-        // Detección automática de tipo compatible para evitar pantallas negras
-        let opcionesGrabacion = { mimeType: 'video/webm' };
-        if (!MediaRecorder.isTypeSupported('video/webm')) {
-            opcionesGrabacion = { mimeType: 'video/mp4' };
-        }
-
-        mediaRecorder = new MediaRecorder(streamCamara, opcionesGrabacion);
+        // Forzamos un bitrate bajo (150kbps) para garantizar compresión agresiva en el navegador
+        mediaRecorder = new MediaRecorder(streamCamara, { 
+            mimeType: 'video/webm;codecs=vp8,opus',
+            videoBitsPerSecond: 150000 
+        });
         
         mediaRecorder.ondataavailable = (e) => {
-            if (e.data && e.data.size > 0) {
-                videoChunks.push(e.data);
-            }
+            if (e.data.size > 0) videoChunks.push(e.data);
         };
 
         mediaRecorder.onstop = () => {
-            // Generar Blob seguro con el formato soportado por el navegador
-            videoBlobFinal = new Blob(videoChunks, { type: mediaRecorder.mimeType || 'video/webm' });
+            const videoBlob = new Blob(videoChunks, { type: 'video/webm' });
             
-            // Previsualización fluida con ObjectURL (evita el bloqueo en negro)
-            const videoUrlTemporal = URL.createObjectURL(videoBlobFinal);
-            
-            videoPreview.srcObject = null;
-            videoPreview.src = videoUrlTemporal;
-            videoPreview.controls = true;
-            videoPreview.muted = false;
-            
-            btnEnviarVideo.disabled = false;
+            const reader = new FileReader();
+            reader.readAsDataURL(videoBlob);
+            reader.onloadend = () => {
+                videoBase64Url = reader.result; // Video comprimido en Base64 listo para Firestore
+                videoPreview.srcObject = null;
+                videoPreview.src = videoBase64Url;
+                videoPreview.controls = true;
+                btnEnviarVideo.disabled = false;
+            };
         };
 
-        mediaRecorder.start(100); // Fragmentar cada 100ms para asegurar la captura completa
+        mediaRecorder.start();
         btnGrabar.disabled = true; 
         btnDetener.disabled = false; 
         btnEnviarVideo.disabled = true;
@@ -294,9 +286,7 @@ btnGrabar.addEventListener('click', async () => {
 });
 
 btnDetener.addEventListener('click', () => {
-    if (mediaRecorder && mediaRecorder.state !== "inactive") {
-        mediaRecorder.stop();
-    }
+    if (mediaRecorder) mediaRecorder.stop();
     if (streamCamara) {
         streamCamara.getTracks().forEach(track => track.stop());
     }
@@ -307,29 +297,17 @@ btnDetener.addEventListener('click', () => {
 document.getElementById('btnEnviarVideo').addEventListener('click', () => {
     let titulo = document.getElementById('inputTituloVid').value;
     let autor = document.getElementById('inputAutorVid').value;
-    if (!titulo || !autor || !videoBlobFinal) return alert("Llena los campos y asegúrate de haber grabado un video.");
+    if (!titulo || !autor || !videoBase64Url) return alert("Llena los campos y graba un video.");
 
-    btnEnviarVideo.innerText = "Procesando... ⏳";
+    guardarEnFirebase('video', titulo, autor, videoBase64Url);
+    
+    document.getElementById('inputTituloVid').value = '';
+    document.getElementById('inputAutorVid').value = '';
+    videoPreview.style.display = 'none'; 
+    videoPreview.src = ''; 
+    videoBase64Url = null;
     btnEnviarVideo.disabled = true;
-
-    // Convertir el video limpio a Base64 para guardarlo directo en Firestore de forma gratuita
-    const reader = new FileReader();
-    reader.readAsDataURL(videoBlobFinal);
-    reader.onloadend = () => {
-        const videoBase64Url = reader.result;
-        
-        guardarEnFirebase('video', titulo, autor, videoBase64Url);
-        
-        // Limpiar formulario y modal
-        document.getElementById('inputTituloVid').value = '';
-        document.getElementById('inputAutorVid').value = '';
-        videoPreview.style.display = 'none'; 
-        videoPreview.src = ''; 
-        videoBlobFinal = null;
-        btnEnviarVideo.innerText = "Enviar al flujo";
-        btnEnviarVideo.disabled = true;
-        cerrarModal('modalCrearVideo');
-    };
+    cerrarModal('modalCrearVideo');
 });
 
 // --- LÓGICA DE LECTURA ---
