@@ -17,13 +17,10 @@ canvas.width = window.innerWidth;
 canvas.height = window.innerHeight;
 
 const raton = { x: null, y: null };
-
-// --- DETECCIÓN DE MOVIMIENTO Y CURSOR DINÁMICO ---
 canvas.addEventListener('mousemove', (e) => { 
     raton.x = e.clientX; 
     raton.y = e.clientY; 
 
-    // Comprobar si el ratón está sobre alguna partícula para cambiar el cursor a manito
     let sobreParticula = false;
     for (let i = 0; i < arregloParticulas.length; i++) {
         let p = arregloParticulas[i];
@@ -34,7 +31,6 @@ canvas.addEventListener('mousemove', (e) => {
             break;
         }
     }
-    
     canvas.style.cursor = sobreParticula ? 'pointer' : 'default';
 });
 
@@ -146,7 +142,7 @@ async function guardarEnFirebase(tipo, titulo, autor, contenido) {
         });
     } catch (e) {
         console.error("Error al guardar: ", e);
-        alert("Error de conexión al guardar el aporte.");
+        alert("El archivo sigue siendo demasiado pesado para Firestore. Intenta grabar un video más corto.");
     }
 }
 
@@ -230,7 +226,7 @@ document.getElementById('btnEnviarImagen').addEventListener('click', () => {
     cerrarModal('modalCrearImagen');
 });
 
-// --- MÓDULO 3: VIDEO ---
+// --- MÓDULO 3: VIDEO CON COMPRESOR NATIVO INTEGRADO ---
 let mediaRecorder;
 let videoChunks = [];
 let videoBase64Url = null;
@@ -244,8 +240,9 @@ const videoPreview = document.getElementById('videoPreview');
 btnGrabar.addEventListener('click', async () => {
     try {
         videoChunks = [];
+        // Resolución optimizada para mantener el peso bajo control
         streamCamara = await navigator.mediaDevices.getUserMedia({ 
-            video: { width: { ideal: 640 }, height: { ideal: 480 } }, 
+            video: { width: { ideal: 480 }, height: { ideal: 360 }, frameRate: { ideal: 15 } }, 
             audio: true 
         });
 
@@ -253,7 +250,11 @@ btnGrabar.addEventListener('click', async () => {
         videoPreview.style.display = 'block';
         videoPreview.controls = false;
         
-        mediaRecorder = new MediaRecorder(streamCamara, { mimeType: 'video/webm' });
+        // Forzamos un bitrate bajo (150kbps) para garantizar compresión agresiva en el navegador
+        mediaRecorder = new MediaRecorder(streamCamara, { 
+            mimeType: 'video/webm;codecs=vp8,opus',
+            videoBitsPerSecond: 150000 
+        });
         
         mediaRecorder.ondataavailable = (e) => {
             if (e.data.size > 0) videoChunks.push(e.data);
@@ -265,7 +266,7 @@ btnGrabar.addEventListener('click', async () => {
             const reader = new FileReader();
             reader.readAsDataURL(videoBlob);
             reader.onloadend = () => {
-                videoBase64Url = reader.result;
+                videoBase64Url = reader.result; // Video comprimido en Base64 listo para Firestore
                 videoPreview.srcObject = null;
                 videoPreview.src = videoBase64Url;
                 videoPreview.controls = true;
